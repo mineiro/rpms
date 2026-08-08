@@ -1,7 +1,9 @@
 name: Specs
 
 # Packaging has no test suite, so the cheap structural checks are what stands
-# between a typo and a failed COPR build ten minutes later.
+# between a typo and a failed COPR build ten minutes later — and, since COPR
+# rebuilds whatever lands on main without a human in the loop, between a bad
+# source and a signed RPM.
 on:
   push:
     branches: [main]
@@ -14,16 +16,25 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Both jobs pin the same image by digest rather than by tag, and repeat it
+# rather than sharing it: `container.image` cannot read the `env` context, so a
+# variable here would look like it worked and quietly do nothing.
+#
+# `fedora:44` is a moving pointer, and everything below — including the checks
+# that decide whether a change may be merged — runs inside whatever it points at
+# on the day. A gate that an image rebuild can silently replace is not a gate.
+# Bump both deliberately with:
+#   skopeo inspect docker://registry.fedoraproject.org/fedora:44 --format '{{.Digest}}'
 jobs:
   specs:
     name: parse and lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    container: fedora:44
+    container: registry.fedoraproject.org/fedora@sha256:67aa3cac2eb64f9cdfbe826c6ede7826589281c6c9c0d0fad5cb74c94b415689
     steps:
       - name: Install tooling
-        run: dnf -y install --setopt=install_weak_deps=0 --nodocs rpm-build rpmdevtools rpmlint git
+        run: dnf -y install --setopt=install_weak_deps=0 --nodocs rpm-build rpmdevtools rpmlint git make
 
       # Pinned to an immutable commit, not a tag: moving a tag is how the
       # tj-actions/changed-files compromise reached thousands of repositories.
@@ -41,3 +52,25 @@ jobs:
       - name: rpmlint
         continue-on-error: true
         run: rpmlint packages/*/*.spec
+
+  sources:
+    name: sources match their checksums
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container: registry.fedoraproject.org/fedora@sha256:67aa3cac2eb64f9cdfbe826c6ede7826589281c6c9c0d0fad5cb74c94b415689
+    steps:
+      - name: Install tooling
+        run: dnf -y install --setopt=install_weak_deps=0 --nodocs rpm-build rpmdevtools git make
+
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # A fresh download every run, compared against what was recorded at review
+      # time. This is the check that notices an upstream tag being moved to a
+      # different commit after the release was reviewed — the failure mode that
+      # `Source0` pointing at a tag leaves wide open.
+      - name: Fetch declared sources and compare
+        run: make check-sources

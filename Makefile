@@ -5,11 +5,13 @@ SHELL := /bin/bash
 PACKAGES_DIR := packages
 OUTDIR ?= $(CURDIR)/dist/srpm
 
-.PHONY: help list check-specs srpm mock
+.PHONY: help list check-specs check-sources record-sources srpm mock
 
 help:
 	@echo "make list                    packages in this repository"
 	@echo "make check-specs             parse and lint every spec"
+	@echo "make check-sources           fetch sources and check their checksums"
+	@echo "make record-sources PACKAGE=gaffer   print sources.sha256 lines for a bump"
 	@echo "make srpm PACKAGE=gaffer     build one package's SRPM"
 	@echo "make mock PACKAGE=gaffer     rebuild that SRPM in a clean chroot"
 
@@ -18,6 +20,20 @@ list:
 
 check-specs:
 	@./scripts/check-specs.sh
+
+# PACKAGE is optional here: with no argument every package is checked, which is
+# what CI runs. Downloading on each run is the point — the checksum only proves
+# anything if something re-fetches and compares.
+check-sources:
+	@set -e; \
+	for dir in $(if $(PACKAGE),$(PACKAGES_DIR)/$(PACKAGE),$(PACKAGES_DIR)/*); do \
+		echo "==> $$(basename $$dir)"; \
+		$(MAKE) --no-print-directory -C "$$dir" check-sources; \
+	done
+
+record-sources:
+	@test -n "$(PACKAGE)" || { echo "PACKAGE is required, e.g. make record-sources PACKAGE=gaffer"; exit 1; }
+	@./scripts/record-sources.sh "$(PACKAGES_DIR)/$(PACKAGE)"
 
 srpm:
 	@test -n "$(PACKAGE)" || { echo "PACKAGE is required, e.g. make srpm PACKAGE=gaffer"; exit 1; }

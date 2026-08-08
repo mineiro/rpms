@@ -1,0 +1,12 @@
+# sha256 of every source this package downloads.
+#
+# Checked by scripts/verify-sources.sh on every build, local and in COPR, and
+# again in CI against a fresh download — which is what would catch the tag
+# being moved upstream after the fact.
+#
+# Verified with `make check-sources PACKAGE=gaffer`, not `sha256sum -c`: the
+# comments here are deliberate and coreutils rejects them.
+#
+# gaffer 0.2.0 — tag v0.2.0, commit f86c16625ec9eb3c489a92648ce99f04daa4321d.
+# The commit is recorded so a moved tag can be identified, not just detected.
+545a1c60640cbacfa27224cb68e1342b124466e85482a3bbdd6d339a08ee0e37  gaffer-0.2.0.tar.gz

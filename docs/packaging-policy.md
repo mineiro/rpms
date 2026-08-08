@@ -18,6 +18,9 @@ source repo needs and gets wrong.
   unchanged upstream version; reset it to 1 on a version bump.
 - **Vendor from the released tarball, never from a checkout.** `cargo vendor
   --locked` so the vendored tree matches the `Cargo.lock` upstream tested.
+- **Every download has a recorded checksum.** `sources.sha256` beside the spec,
+  checked on every build. A failing checksum is never fixed by updating the
+  checksum — see [security.md](security.md).
 - **Patches are numbered and explained.** A patch with no comment saying why it
   exists and when it can be dropped becomes permanent by accident.
 - **The `License:` field is the *effective* licence of the shipped binary.**
@@ -33,7 +36,10 @@ source repo needs and gets wrong.
 Bumping a package here means the upstream released something. The sequence is:
 
 1. `Version:` to the new release, `Release:` back to `1`.
-2. `make srpm PACKAGE=<name>` — this fetches the new tarball and re-vendors.
-3. `make mock PACKAGE=<name>`.
-4. Add a `%changelog` entry describing the *packaging* change, not the upstream
+2. `make record-sources PACKAGE=<name>` — paste the printed lines into
+   `sources.sha256`, updating the tag and commit in the comment above them. The
+   build will refuse to proceed until the new tarball has a recorded checksum.
+3. `make srpm PACKAGE=<name>` — this fetches the new tarball and re-vendors.
+4. `make mock PACKAGE=<name>`.
+5. Add a `%changelog` entry describing the *packaging* change, not the upstream
    changelog. Upstream keeps its own; duplicating it here means maintaining two.

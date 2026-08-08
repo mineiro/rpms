@@ -39,6 +39,7 @@ entry sets a different `Subdirectory` and they share one builder.
 
 ```sh
 make check-specs               # cheap: every spec parses, versions agree
+make check-sources             # fetched tarballs match their recorded checksums
 make srpm PACKAGE=<name>       # fetch, vendor, build the SRPM
 make mock PACKAGE=<name>       # rebuild in a clean chroot
 ```
@@ -46,6 +47,30 @@ make mock PACKAGE=<name>       # rebuild in a clean chroot
 `make mock` is the gate that matters. COPR builds in a clean chroot with no
 network, so a build that succeeds only against your installed system is not
 packaged yet — it just happens to work where you tried it.
+
+## Source integrity
+
+Every package records the sha256 of what it downloads in
+`packages/<name>/sources.sha256`, and every build path checks it — locally, in
+COPR, and in CI against a fresh download. `Source0` points at a tag, and a tag
+can be moved; the checksum is what turns that from silent into a failed build.
+
+**If a checksum check fails, do not update the checksum to make it pass.** That
+is the single most damaging thing anyone can do in this repository. A moved tag
+and a re-uploaded tarball are indistinguishable from a legitimate change when
+seen from inside the build, and rewriting the recorded hash turns the one alarm
+that would have fired into a green build. Find out why the bytes changed first.
+
+On a genuine version bump, `make record-sources PACKAGE=<name>` prints the new
+lines. It prints rather than writes, deliberately — a human is supposed to look
+at the bytes once and say that this is the release.
+
+Adding a source from a host that is not already allowed means editing
+`allowed_source_hosts` in `scripts/check-specs.sh`, in a commit of its own, with
+a reason. That is not friction to route around; it is the review.
+
+The rest of the model — what the chain protects, and what it explicitly does
+not — is in [docs/security.md](docs/security.md).
 
 ## Vendoring
 

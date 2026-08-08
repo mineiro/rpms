@@ -9,13 +9,14 @@ SPEC ?= $(firstword $(wildcard *.spec))
 OUTDIR ?= $(CURDIR)/../../dist/srpm
 SOURCEDIR ?= $(CURDIR)/sources
 
-.PHONY: srpm vendor clean
+.PHONY: srpm vendor check-sources clean
 
 srpm:
 	@test -n "$(SPEC)" || { echo "no .spec file here"; exit 1; }
 	@mkdir -p "$(OUTDIR)" "$(SOURCEDIR)"
 	@if ls patches/*.patch >/dev/null 2>&1; then cp -f patches/*.patch "$(SOURCEDIR)"/; fi
 	spectool -g --source 0 -C "$(SOURCEDIR)" "$(SPEC)"
+	@sh ../../scripts/verify-sources.sh "$(SPEC)" "$(SOURCEDIR)"
 	$(MAKE) vendor SPEC="$(SPEC)" SOURCEDIR="$(SOURCEDIR)"
 	rpmbuild -bs \
 		--define "_sourcedir $(SOURCEDIR)" \
@@ -45,6 +46,15 @@ vendor:
 	tar -cJf "$(SOURCEDIR)/$$vendor_name" -C "$$srcdir" vendor; \
 	rm -rf "$$tmpdir"; trap - EXIT; \
 	echo "generated $(SOURCEDIR)/$$vendor_name"
+
+# Fetch and check, without building anything. Kept separate from `srpm` so CI
+# can run it on every pull request against a fresh download: that is what turns
+# sources.sha256 from a record of what was downloaded once into a check that
+# upstream has not moved the tag since.
+check-sources:
+	@mkdir -p "$(SOURCEDIR)"
+	spectool -g --source 0 -C "$(SOURCEDIR)" "$(SPEC)"
+	@sh ../../scripts/verify-sources.sh "$(SPEC)" "$(SOURCEDIR)"
 
 clean:
 	rm -rf .build $(SOURCEDIR)/*.tar.* *.tar.* *.patch
