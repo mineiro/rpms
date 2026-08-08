@@ -18,6 +18,10 @@
 # COPR passes an absolute path; every rpm command below wants the bare name.
 specfile = $(notdir $(spec))
 
+# COPR runs this from inside packages/<name>, so the repository root has to be
+# derived from where this file is rather than from the working directory.
+repo_root = $(patsubst %/.copr,%,$(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST))))))
+
 # A spec needs vendoring when it declares a vendor tarball *and* builds with
 # cargo. Both halves matter: Source1 alone could be anything, and a cargo
 # BuildRequires alone might be a package whose sources are already bundled.
@@ -45,6 +49,18 @@ srpm: prepare
 	else \
 		spectool -g -R "./$(specfile)"; \
 	fi
+	@# The one check on what was actually downloaded. COPR signs whatever comes
+	@# out of this build and dnf installs it with scriptlets that run as root,
+	@# so an unverified tarball here is an unverified tarball on every machine
+	@# that enabled the repository. Fail closed: a missing checker is a failure,
+	@# not a skipped step.
+	@test -f "$(repo_root)/scripts/verify-sources.sh" || { \
+		echo "scripts/verify-sources.sh not found under $(repo_root)"; \
+		echo "refusing to build from sources nothing has checked"; \
+		exit 1; \
+	}
+	@sh "$(repo_root)/scripts/verify-sources.sh" "./$(specfile)" \
+		"." "./sources" "$$(rpm --eval '%{_sourcedir}')" "$$HOME/rpmbuild/SOURCES"
 	@# Patches live in patches/ so they are reviewable next to the spec, but
 	@# rpmbuild expects them beside it.
 	@if ls ./patches/*.patch >/dev/null 2>&1; then \

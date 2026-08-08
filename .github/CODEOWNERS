@@ -1,0 +1,14 @@
+# Every file here decides what ends up inside a signed RPM on someone else's
+# machine, and several of them decide what runs as root when it is installed.
+# There is no path in this repository that does not want an owner's eyes on it.
+*                       @mineiro
+
+# Called out separately because these are the ones where a change is easy to
+# wave through and expensive to get wrong: the builder COPR executes, the
+# recorded checksums that decide whether a download is accepted, the checks that
+# gate a merge, and the rules that decide who may bypass them.
+/.copr/                 @mineiro
+/scripts/               @mineiro
+/.github/               @mineiro
+/packages/*/*.spec      @mineiro
+/packages/*/sources.sha256  @mineiro
