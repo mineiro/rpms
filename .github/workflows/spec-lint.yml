@@ -1,0 +1,43 @@
+name: Specs
+
+# Packaging has no test suite, so the cheap structural checks are what stands
+# between a typo and a failed COPR build ten minutes later.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  specs:
+    name: parse and lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container: fedora:44
+    steps:
+      - name: Install tooling
+        run: dnf -y install --setopt=install_weak_deps=0 --nodocs rpm-build rpmdevtools rpmlint git
+
+      # Pinned to an immutable commit, not a tag: moving a tag is how the
+      # tj-actions/changed-files compromise reached thousands of repositories.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Specs parse and agree with their sources
+        run: ./scripts/check-specs.sh
+
+      # Advisory: rpmlint has opinions Fedora does not enforce, and a packaging
+      # repo that cannot merge until every one is silenced stops being useful.
+      # Read the output; do not gate on it.
+      - name: rpmlint
+        continue-on-error: true
+        run: rpmlint packages/*/*.spec

@@ -1,0 +1,11 @@
+# Built artefacts. Sources are fetched, never committed: a tarball in git is a
+# second copy of something that already has a canonical home at a tag, and it
+# goes stale silently.
+/dist/
+/mock-results/
+packages/*/.build/
+packages/*/sources/*
+!packages/*/sources/.gitkeep
+packages/*/*.tar.*
+packages/*/*.patch
+packages/*/*.rpm
