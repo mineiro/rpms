@@ -74,3 +74,29 @@ jobs:
       # `Source0` pointing at a tag leaves wide open.
       - name: Fetch declared sources and compare
         run: make check-sources
+
+  nvr:
+    name: rebuilds get a new NVR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Full history: this compares against the merge base, which a shallow
+      # clone does not have.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # COPR rebuilds a package when a push touches its directory. Without a
+      # bump that rebuild replaces an existing NVR with different bits, and dnf
+      # will never offer it as an update — so the people who installed it are
+      # the only ones who never get it.
+      #
+      # Via env rather than inline `${{ }}`, so the value is data to the shell
+      # and not text spliced into the script.
+      - name: Package changes carry a version or release bump
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: ./scripts/check-nvr.sh "${BASE_SHA:-HEAD~1}"
