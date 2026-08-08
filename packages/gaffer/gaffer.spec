@@ -2,7 +2,7 @@
 
 Name:           gaffer
 Version:        0.2.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Daemon and CLI for controlling Elgato Key Lights
 
 # gaffer's own code is GPL-3.0-or-later. Rust binaries statically link their
@@ -99,6 +99,15 @@ export GAFFER_BUILD_ID="%{version}-%{release}"
 %{_datadir}/dbus-1/services/io.mineiro.gaffer.service
 
 %changelog
+* Sat Aug 08 2026 Jose Tiburcio Ribeiro Netto <jnetto@mineiro.io> - 0.2.0-2
+- Rebuild. The packaging now verifies Source0 against a recorded sha256 on
+  every build, so this is the first artefact whose source was checked rather
+  than assumed. gaffer itself is unchanged.
+- This release exists because 0.2.0-1 was built twice from different trees.
+  Both builds package the same software, but two artefacts sharing one NVR is
+  exactly what dnf cannot distinguish, so the number moves rather than being
+  quietly reused.
+
 * Sat Aug 08 2026 Jose Tiburcio Ribeiro Netto <jnetto@mineiro.io> - 0.2.0-1
 - Gangs: link lights so they move as one instrument, keeping the brightness
   difference they had. Offset and mirror modes; the first lamp named leads.

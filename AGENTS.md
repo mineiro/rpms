@@ -48,6 +48,19 @@ make mock PACKAGE=<name>       # rebuild in a clean chroot
 network, so a build that succeeds only against your installed system is not
 packaged yet — it just happens to work where you tried it.
 
+## One NVR, one set of bits
+
+Any change inside `packages/<name>/` needs a `Release:` bump, even one that
+cannot possibly affect the built artefact. COPR rebuilds when a push touches the
+directory, and a rebuild without a bump overwrites an existing NVR with
+different bits. dnf keys on NEVRA, so the people who already installed it are
+precisely the ones who will never be offered the replacement — two binaries
+answering to one name.
+
+This is the same failure that caused packaging to be split out of the source
+repositories: an artefact that claims to be a release and is not. `Release:` is
+an integer so that avoiding it costs one character. CI enforces it.
+
 ## Source integrity
 
 Every package records the sha256 of what it downloads in

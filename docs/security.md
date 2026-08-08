@@ -45,6 +45,14 @@ value file in the repository: it executes on COPR's builders on every push to
 which scriptlets a package has on every run, so a pull request that adds one
 cannot pass through CI unremarked.
 
+**RPM → the machine that already has it.** A verified chain is worth nothing if
+the name at the end of it is ambiguous. COPR rebuilds a package when a push
+touches its directory, so a change without a `Release:` bump replaces an
+existing NVR with different bits — and dnf, which keys on NEVRA, never offers it
+as an update. The result is two different binaries answering to one name, with
+the people who already installed it being the only ones who never receive the
+replacement. `scripts/check-nvr.sh` fails the build in that case.
+
 ## What the checks actually stop
 
 `scripts/check-specs.sh` runs on every push and pull request:
