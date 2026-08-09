@@ -47,22 +47,44 @@ cannot pass through CI unremarked.
 
 **RPM → the machine that already has it.** A verified chain is worth nothing if
 the name at the end of it is ambiguous. COPR rebuilds a package when a push
-touches its directory, so a change without a `Release:` bump replaces an
-existing NVR with different bits — and dnf, which keys on NEVRA, never offers it
-as an update. The result is two different binaries answering to one name, with
-the people who already installed it being the only ones who never receive the
-replacement. `scripts/check-nvr.sh` fails the build in that case.
+touches its directory, so a change without a `Release:` bump publishes a second,
+different *file* under a name that already identified one — and dnf, which keys
+on NEVRA, never offers it as an update. `scripts/check-nvr.sh` fails the build
+in that case.
 
 It is tempting to argue that a rebuild from a tree whose changes cannot reach
 the artefact — a comment, the local Makefile, this file — produces identical
-bits anyway, and that the check is therefore pedantic. Measured, on this
-repository: two SRPM builds from an *identical* tree produce different
-tarballs, because `cargo vendor` re-runs per build and the vendor tarball it
-tars up is not byte-reproducible. The SRPM is published under the NVR too. So a
-rebuild does not merely risk differing from its predecessor; here it always
-does. Whether the *binary* RPM also differs is a separate question and is not
-established — `SOURCE_DATE_EPOCH` is pinned from the changelog date, which
-removes the most obvious source of drift.
+bits anyway, and that the check is therefore pedantic. Two rebuilds of 0.2.0-2
+from an identical tree, `mock`ed on fedora-44-x86_64, say otherwise, but not in
+the way the loose version of the argument expects:
+
+```
+gaffer-0.2.0-2.fc44.src.rpm      e0bc4021…  vs  39aa708f…   differ
+gaffer-0.2.0-2.fc44.x86_64.rpm   683ece1f…  vs  a2c76161…   differ
+/usr/bin/gafferd                 ae18758f…  vs  ae18758f…   identical
+/usr/bin/gaffer                                             identical
+```
+
+Every published file differs on every rebuild — `cargo vendor` re-runs and its
+tarball is not byte-reproducible, and RPM headers carry a build time. But the
+compiled binaries are identical, because `SOURCE_DATE_EPOCH` is pinned from the
+changelog date. The non-determinism lives entirely in the packaging containers
+and never reaches `/usr/bin`.
+
+So the claim "a rebuild silently changes the code users are running" is **false
+here**, and stating it that way would be a liability: it invites someone to test
+it, find the binaries match, and discard the rule along with the bad argument.
+The narrower claim survives and is enough on its own —
+
+> A same-NVR rebuild publishes a *different file* under a name that is supposed
+> to identify its bytes. Any checksum or signature recorded against the first
+> stops matching, two mirrors can serve different files for one NVR, and the
+> second overwrites the first — so the pair can never be compared afterwards.
+
+That holds whether or not the payload happens to be identical, which is exactly
+why the rule does not depend on measuring the payload. Measured on one chroot,
+comparing the two shipped binaries; `debuginfo` and `debugsource` embed build
+paths and were not compared.
 
 ## What the checks actually stop
 
