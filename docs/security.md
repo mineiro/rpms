@@ -53,6 +53,17 @@ as an update. The result is two different binaries answering to one name, with
 the people who already installed it being the only ones who never receive the
 replacement. `scripts/check-nvr.sh` fails the build in that case.
 
+It is tempting to argue that a rebuild from a tree whose changes cannot reach
+the artefact — a comment, the local Makefile, this file — produces identical
+bits anyway, and that the check is therefore pedantic. Measured, on this
+repository: two SRPM builds from an *identical* tree produce different
+tarballs, because `cargo vendor` re-runs per build and the vendor tarball it
+tars up is not byte-reproducible. The SRPM is published under the NVR too. So a
+rebuild does not merely risk differing from its predecessor; here it always
+does. Whether the *binary* RPM also differs is a separate question and is not
+established — `SOURCE_DATE_EPOCH` is pinned from the changelog date, which
+removes the most obvious source of drift.
+
 ## What the checks actually stop
 
 `scripts/check-specs.sh` runs on every push and pull request:
