@@ -17,8 +17,8 @@ source repo needs and gets wrong.
 - **`Release:` is a plain integer.** Bump it for *any* change inside
   `packages/<name>/`, not only ones that alter what is built; reset it to 1 on a
   version bump. COPR rebuilds when a push touches the directory, so a change
-  without a bump replaces an existing NVR with different bits — and dnf, which
-  keys on NEVRA, will never offer it as an update. CI enforces this.
+  without a bump publishes a different file under an existing NVR — and dnf,
+  which keys on NEVRA, will never offer it as an update. CI enforces this.
 - **Vendor from the released tarball, never from a checkout.** `cargo vendor
   --locked` so the vendored tree matches the `Cargo.lock` upstream tested.
 - **Every download has a recorded checksum.** `sources.sha256` beside the spec,
