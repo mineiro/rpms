@@ -1,8 +1,8 @@
 %global forgeurl https://github.com/mineiro/gaffer
 
 Name:           gaffer
-Version:        0.2.0
-Release:        2%{?dist}
+Version:        0.2.1
+Release:        1%{?dist}
 Summary:        Daemon and CLI for controlling Elgato Key Lights
 
 # gaffer's own code is GPL-3.0-or-later. Rust binaries statically link their
@@ -99,6 +99,19 @@ export GAFFER_BUILD_ID="%{version}-%{release}"
 %{_datadir}/dbus-1/services/io.mineiro.gaffer.service
 
 %changelog
+* Wed Aug 19 2026 Jose Tiburcio Ribeiro Netto <jnetto@mineiro.io> - 0.2.1-1
+- Upstream 0.2.1, which changes no source at all: it exists to carry a
+  dependency refresh into the Cargo.lock that this package vendors from. What
+  ships differs from 0.2.0 only in the statically linked tree.
+- License: re-verified against the LICENSE SUMMARY that %%{cargo_license_summary}
+  prints, because a dependency refresh is exactly what changes it silently. It
+  is unchanged. One crate joins the tree (zcheapstr, MIT); sync_wrapper is
+  still the only Apache-2.0-only crate, and the ICU data crates are still the
+  only thing requiring Unicode-3.0 — so every term already in the field is
+  still earned, and no new one is.
+- Upstream has deleted the spec and .copr/ it used to carry, so 0.2.1 is the
+  first release for which this repository is the only place gaffer is packaged.
+
 * Sat Aug 08 2026 Jose Tiburcio Ribeiro Netto <jnetto@mineiro.io> - 0.2.0-2
 - Rebuild. The packaging now verifies Source0 against a recorded sha256 on
   every build, so this is the first artefact whose source was checked rather
