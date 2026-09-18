@@ -7,8 +7,8 @@
 # Verified with `make check-sources PACKAGE=gaffer`, not `sha256sum -c`: the
 # comments here are deliberate and coreutils rejects them.
 #
-# gaffer 0.2.1 — tag v0.2.1, commit 831ef35700cad73d7be1fdc94fc61f3b15323f9c.
+# gaffer 0.2.2 — tag v0.2.2, commit e566af00ffda925c0366eaa1be45153e465a2992.
 # The commit is recorded so a moved tag can be identified, not just detected.
 # This tag is signed and, upstream, immutable — but that is a promise made by
 # the forge, and this file is what checks it from the outside.
-0fc0872141c5f0d5cea6ca2129d735787e5b19ddd0ae0cc406cedd5428bb5aea  gaffer-0.2.1.tar.gz
+8d9522d3195684dc7bbe1eddad5232062d6d4e5646ac5522e27ef7fe666a42dd  gaffer-0.2.2.tar.gz
