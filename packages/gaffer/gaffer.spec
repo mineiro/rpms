@@ -1,7 +1,7 @@
 %global forgeurl https://github.com/mineiro/gaffer
 
 Name:           gaffer
-Version:        0.2.1
+Version:        0.2.2
 Release:        1%{?dist}
 Summary:        Daemon and CLI for controlling Elgato Key Lights
 
@@ -99,6 +99,17 @@ export GAFFER_BUILD_ID="%{version}-%{release}"
 %{_datadir}/dbus-1/services/io.mineiro.gaffer.service
 
 %changelog
+* Thu Sep 17 2026 Jose Tiburcio Ribeiro Netto <jnetto@mineiro.io> - 0.2.2-1
+- Upstream 0.2.2. Like 0.2.1 it changes no source: it carries a dependency
+  refresh into the Cargo.lock this package vendors from — mdns-sd 0.21.3,
+  reqwest 0.13.5, toml 1.1.5. mdns-sd 0.21.2 fixes an out-of-bounds panic on a
+  truncated HINFO record, which for a daemon that parses every mDNS response on
+  the LAN meant any peer could take discovery down until a restart.
+- License: re-verified against the LICENSE SUMMARY that %%{cargo_license_summary}
+  prints. It is unchanged. reqwest 0.13.5 brings a second copy of base64
+  (0.23.1, MIT OR Apache-2.0) beside the 0.22.1 hyper-util still uses; the MIT
+  branch is taken as for every other dual-licensed crate, so no term is added.
+
 * Wed Aug 19 2026 Jose Tiburcio Ribeiro Netto <jnetto@mineiro.io> - 0.2.1-1
 - Upstream 0.2.1, which changes no source at all: it exists to carry a
   dependency refresh into the Cargo.lock that this package vendors from. What
