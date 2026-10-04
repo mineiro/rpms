@@ -1,0 +1,83 @@
+name: Repoclosure
+
+# Fedora can move a library soname under a published package (an ABI
+# transition) without anything changing here. This weekly check resolves every
+# package in the COPR repository against the current Fedora repositories and
+# opens an issue when something no longer installs.
+#
+# Unlike the spec checks, the images here deliberately track the moving
+# `fedora:<release>` tags: the point is to test against Fedora as users have it
+# today.
+on:
+  schedule:
+    - cron: '35 9 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  repoclosure:
+    name: repoclosure (${{ matrix.fedora_version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora_version: ["43", "44", "45", rawhide]
+    container:
+      image: registry.fedoraproject.org/fedora:${{ matrix.fedora_version }}
+    steps:
+      - name: Repoclosure
+        env:
+          FEDORA_VERSION: ${{ matrix.fedora_version }}
+        run: |
+          repo_id=copr:mineiro:rpms
+          cat > /etc/yum.repos.d/copr-mineiro-rpms.repo <<'EOF'
+          [copr:mineiro:rpms]
+          name=COPR mineiro/rpms
+          baseurl=https://download.copr.fedorainfracloud.org/results/mineiro/rpms/fedora-$releasever-$basearch/
+          type=rpm-md
+          skip_if_unavailable=False
+          gpgcheck=1
+          gpgkey=https://download.copr.fedorainfracloud.org/results/mineiro/rpms/pubkey.gpg
+          repo_gpgcheck=0
+          enabled=1
+          EOF
+          dnf -y --disablerepo="${repo_id}" --setopt=install_weak_deps=0 install dnf-plugins-core
+          set +e
+          dnf -q --refresh repoclosure --check "${repo_id}" --newest --best > /tmp/repoclosure.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/repoclosure.log
+          awk '/^package:/ { print $2 }' /tmp/repoclosure.log | sort -u | while read -r nevra; do
+            echo "::error title=Broken repository package::${nevra} has unresolved dependencies on Fedora ${FEDORA_VERSION}"
+          done
+          exit "${status}"
+
+  report:
+    needs: repoclosure
+    if: ${{ always() && needs.repoclosure.result != 'cancelled' && needs.repoclosure.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      checks: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Open, update, or close the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs.repoclosure.result }}
+        run: |
+          if [ "$RESULT" = success ]; then
+            ./scripts/ci-issue.sh alert ci-repoclosure "Repoclosure is failing" passing
+          else
+            ./scripts/ci-issue.sh run-summary > "${RUNNER_TEMP}/body.md"
+            ./scripts/ci-issue.sh alert ci-repoclosure "Repoclosure is failing" failing "${RUNNER_TEMP}/body.md"
+          fi
