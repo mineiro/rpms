@@ -47,7 +47,7 @@ jobs:
           repo_gpgcheck=0
           enabled=1
           EOF
-          dnf -y --disablerepo="${repo_id}" --setopt=install_weak_deps=0 install dnf-plugins-core
+          dnf -y --disablerepo="${repo_id}" --setopt=install_weak_deps=0 install dnf5-plugins
           set +e
           dnf -q --refresh repoclosure --check "${repo_id}" --newest --best > /tmp/repoclosure.log 2>&1
           status=$?
@@ -65,6 +65,7 @@ jobs:
     permissions:
       actions: read
       checks: read
+      contents: read
       issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
