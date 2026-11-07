@@ -27,6 +27,8 @@ allowed_source_hosts="github.com"
 suspicious='curl|wget|netcat|\bnc\b|/dev/tcp|base64[[:space:]]+(-d|--decode)|\beval\b|chmod[[:space:]]+777'
 
 for spec in packages/*/*.spec; do
+    # With no packages the glob stays literal; there is nothing to check.
+    [ -e "$spec" ] || { echo "no specs under packages/"; continue; }
     name=$(basename "$spec")
     pkgdir=$(dirname "$spec")
 

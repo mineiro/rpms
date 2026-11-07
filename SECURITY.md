@@ -12,9 +12,9 @@ problem it is:
 - **In the packaging** — a spec that installs something with the wrong
   permissions, a scriptlet that does something it should not, a source fetched
   from somewhere it should not be, a weakness in the build path. Report it here.
-- **In the software itself** — a bug in gaffer's own code. Report it in
-  [mineiro/gaffer](https://github.com/mineiro/gaffer/security), which is where a
-  fix would be released from. A packaging repository cannot fix it; it can only
+- **In the software itself** — a bug in the packaged program's own code.
+  Report it to that project's own repository, which is where a fix would be
+  released from. A packaging repository cannot fix it; it can only
   package the release that does.
 
 If you are not sure which it is, report it here and it will be routed.
