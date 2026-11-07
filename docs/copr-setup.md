@@ -16,14 +16,6 @@ and costs a separate project to keep in step for every package added. That trade
 only pays when the packages have genuinely different audiences, which is not the
 case for one person's software.
 
-**gaffer moved.** It was previously built in `mineiro/gaffer`, which its README
-told people to enable. Anyone who did needs to switch:
-
-```sh
-sudo dnf copr disable mineiro/gaffer
-sudo dnf copr enable mineiro/rpms
-```
-
 ## Adding a package
 
 In the COPR project, add a package with:

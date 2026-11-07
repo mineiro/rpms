@@ -5,19 +5,15 @@ Fedora packaging for the software built at [mineiro.io](https://mineiro.io).
 One repository, many packages, one COPR project: **`mineiro/rpms`**. Each
 directory under `packages/` is a self-contained package.
 
-| package                   | what it is                           |
-|---------------------------|--------------------------------------|
-| [gaffer](packages/gaffer) | Daemon and CLI for Elgato Key Lights |
+There are no packages here at the moment. gaffer, the only one so far, was
+removed in November 2026 when its source repository went private.
 
 ## Installing
 
 ```sh
 sudo dnf copr enable mineiro/rpms
-sudo dnf install gaffer
+sudo dnf install <package>
 ```
-
-If you enabled `mineiro/gaffer` before packaging moved here, switch with
-`sudo dnf copr disable mineiro/gaffer` first.
 
 ## Why packaging lives apart from the source
 
@@ -38,8 +34,8 @@ source is a tarball that already exists at a tag, and there is nothing to race.
 ```sh
 make list                      # what is here
 make check-specs               # parse and sanity-check every spec
-make srpm PACKAGE=gaffer       # fetch upstream, vendor, build the SRPM
-make mock PACKAGE=gaffer       # rebuild it in a clean chroot — the real gate
+make srpm PACKAGE=<name>       # fetch upstream, vendor, build the SRPM
+make mock PACKAGE=<name>       # rebuild it in a clean chroot — the real gate
 ```
 
 `make srpm` fetches the released tarball and vendors its dependencies, because

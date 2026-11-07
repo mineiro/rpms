@@ -11,32 +11,34 @@ help:
 	@echo "make list                    packages in this repository"
 	@echo "make check-specs             parse and lint every spec"
 	@echo "make check-sources           fetch sources and check their checksums"
-	@echo "make record-sources PACKAGE=gaffer   print sources.sha256 lines for a bump"
-	@echo "make srpm PACKAGE=gaffer     build one package's SRPM"
-	@echo "make mock PACKAGE=gaffer     rebuild that SRPM in a clean chroot"
+	@echo "make record-sources PACKAGE=<name>   print sources.sha256 lines for a bump"
+	@echo "make srpm PACKAGE=<name>     build one package's SRPM"
+	@echo "make mock PACKAGE=<name>     rebuild that SRPM in a clean chroot"
 
 list:
-	@ls -1 $(PACKAGES_DIR)
+	@ls -1 $(PACKAGES_DIR) | grep -v '^\.' || echo "(no packages)"
 
 check-specs:
 	@./scripts/check-specs.sh
 
 # PACKAGE is optional here: with no argument every package is checked, which is
-# what CI runs. Downloading on each run is the point — the checksum only proves
-# anything if something re-fetches and compares.
+# what CI runs, and an empty packages/ checks nothing. A PACKAGE that does not
+# exist is an error, not a silent pass. Downloading on each run is the point —
+# the checksum only proves anything if something re-fetches and compares.
 check-sources:
 	@set -e; \
 	for dir in $(if $(PACKAGE),$(PACKAGES_DIR)/$(PACKAGE),$(PACKAGES_DIR)/*); do \
+		$(if $(PACKAGE),,[ -d "$$dir" ] || continue;) \
 		echo "==> $$(basename $$dir)"; \
 		$(MAKE) --no-print-directory -C "$$dir" check-sources; \
 	done
 
 record-sources:
-	@test -n "$(PACKAGE)" || { echo "PACKAGE is required, e.g. make record-sources PACKAGE=gaffer"; exit 1; }
+	@test -n "$(PACKAGE)" || { echo "PACKAGE is required, e.g. make record-sources PACKAGE=<name>"; exit 1; }
 	@./scripts/record-sources.sh "$(PACKAGES_DIR)/$(PACKAGE)"
 
 srpm:
-	@test -n "$(PACKAGE)" || { echo "PACKAGE is required, e.g. make srpm PACKAGE=gaffer"; exit 1; }
+	@test -n "$(PACKAGE)" || { echo "PACKAGE is required, e.g. make srpm PACKAGE=<name>"; exit 1; }
 	@$(MAKE) -C "$(PACKAGES_DIR)/$(PACKAGE)" srpm OUTDIR="$(OUTDIR)"
 
 # The gate that matters before pushing: COPR builds in a clean chroot, so a
