@@ -22,12 +22,13 @@ check-specs:
 	@./scripts/check-specs.sh
 
 # PACKAGE is optional here: with no argument every package is checked, which is
-# what CI runs. Downloading on each run is the point — the checksum only proves
-# anything if something re-fetches and compares.
+# what CI runs, and an empty packages/ checks nothing. A PACKAGE that does not
+# exist is an error, not a silent pass. Downloading on each run is the point —
+# the checksum only proves anything if something re-fetches and compares.
 check-sources:
 	@set -e; \
 	for dir in $(if $(PACKAGE),$(PACKAGES_DIR)/$(PACKAGE),$(PACKAGES_DIR)/*); do \
-		[ -d "$$dir" ] || continue; \
+		$(if $(PACKAGE),,[ -d "$$dir" ] || continue;) \
 		echo "==> $$(basename $$dir)"; \
 		$(MAKE) --no-print-directory -C "$$dir" check-sources; \
 	done
